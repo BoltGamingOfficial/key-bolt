@@ -1,0 +1,52 @@
+name: Build iOS Simulator App
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build iOS Simulator app
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Build for iOS Simulator
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -project KeyBolt.xcodeproj \
+            -scheme KeyBolt \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/KeyBoltDerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package simulator app
+        run: |
+          APP_PATH="$RUNNER_TEMP/KeyBoltDerivedData/Build/Products/Debug-iphonesimulator/Key-Bolt.app"
+          test -d "$APP_PATH"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$RUNNER_TEMP/Key-Bolt-iOS-Simulator.zip"
+
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v7
+        with:
+          name: key-bolt-ios-simulator-app
+          path: ${{ runner.temp }}/Key-Bolt-iOS-Simulator.zip
+          if-no-files-found: error
+          retention-days: 14
