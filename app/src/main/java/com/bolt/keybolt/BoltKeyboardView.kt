@@ -6,6 +6,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.view.MotionEvent
 import android.view.View
+import kotlin.math.min
 
 class BoltKeyboardView(context: android.content.Context, private val service: KeyboardService) : View(context) {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -104,7 +105,7 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
             "COMPACT" -> .9f
             else -> 1f
         }
-        val maxWidth = width * widthFactor * scale.coerceIn(.8f, 1.2f)
+        val maxWidth = min(width.toFloat(), width * widthFactor * scale.coerceIn(.8f, 1.2f))
         val startX = when (mode) {
             "ONE_HAND_RIGHT" -> width - maxWidth
             "ONE_HAND_LEFT" -> 0f

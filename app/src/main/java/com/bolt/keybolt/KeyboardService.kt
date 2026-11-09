@@ -92,7 +92,7 @@ class KeyboardService : InputMethodService() {
         val mime = contentResolver.getType(uri) ?: "application/octet-stream"
         val editor = currentInputEditorInfo
         val supported = editor?.contentMimeTypes ?: emptyArray()
-        val mimeAccepted = supported.any { it == mime || (it.endsWith("/*") && mime.startsWith(it.removeSuffix("*"))) }
+        val mimeAccepted = supported.any { it == "*/*" || it == mime || (it.endsWith("/*") && mime.startsWith(it.removeSuffix("*"))) }
         if (!mimeAccepted) {
             Toast.makeText(this, "The current app does not accept this attachment type", Toast.LENGTH_SHORT).show()
             return

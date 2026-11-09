@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <input-method xmlns:android="http://schemas.android.com/apk/res/android" android:isDefault="false" android:supportsSwitchingToNextInputMethod="true">
-    <subtype android:label="@string/subtype_english" android:imeSubtypeLocale="en_US" android:imeSubtypeMode="keyboard" android:isAsciiCapable="true" />
-    <subtype android:label="@string/subtype_french" android:imeSubtypeLocale="fr_FR" android:imeSubtypeMode="keyboard" />
-    <subtype android:label="@string/subtype_german" android:imeSubtypeLocale="de_DE" android:imeSubtypeMode="keyboard" />
-    <subtype android:label="@string/subtype_spanish" android:imeSubtypeLocale="es_ES" android:imeSubtypeMode="keyboard" />
-    <subtype android:label="@string/subtype_chinese" android:imeSubtypeLocale="zh_CN" android:imeSubtypeMode="keyboard" />
-    <subtype android:label="@string/subtype_japanese" android:imeSubtypeLocale="ja_JP" android:imeSubtypeMode="keyboard" />
-    <subtype android:label="@string/subtype_korean" android:imeSubtypeLocale="ko_KR" android:imeSubtypeMode="keyboard" />
-    <subtype android:label="@string/subtype_arabic" android:imeSubtypeLocale="ar" android:imeSubtypeMode="keyboard" android:isAsciiCapable="false" />
+    <subtype android:label="@string/subtype_english" android:imeSubtypeLocale="en_US" android:languageTag="en-US" android:imeSubtypeMode="keyboard" android:isAsciiCapable="true" />
+    <subtype android:label="@string/subtype_french" android:imeSubtypeLocale="fr_FR" android:languageTag="fr-FR" android:imeSubtypeMode="keyboard" />
+    <subtype android:label="@string/subtype_german" android:imeSubtypeLocale="de_DE" android:languageTag="de-DE" android:imeSubtypeMode="keyboard" />
+    <subtype android:label="@string/subtype_spanish" android:imeSubtypeLocale="es_ES" android:languageTag="es-ES" android:imeSubtypeMode="keyboard" />
+    <subtype android:label="@string/subtype_chinese" android:imeSubtypeLocale="zh_CN" android:languageTag="zh-CN" android:imeSubtypeMode="keyboard" />
+    <subtype android:label="@string/subtype_japanese" android:imeSubtypeLocale="ja_JP" android:languageTag="ja-JP" android:imeSubtypeMode="keyboard" />
+    <subtype android:label="@string/subtype_korean" android:imeSubtypeLocale="ko_KR" android:languageTag="ko-KR" android:imeSubtypeMode="keyboard" />
+    <subtype android:label="@string/subtype_arabic" android:imeSubtypeLocale="ar" android:languageTag="ar" android:imeSubtypeMode="keyboard" android:isAsciiCapable="false" />
     <subtype android:label="@string/subtype_hindi" android:imeSubtypeLocale="hi_IN" android:languageTag="hi-IN" android:imeSubtypeMode="keyboard" android:isAsciiCapable="false" />
     <subtype android:label="@string/subtype_italian" android:imeSubtypeLocale="it_IT" android:languageTag="it-IT" android:imeSubtypeMode="keyboard" />
     <subtype android:label="@string/subtype_portuguese" android:imeSubtypeLocale="pt_BR" android:languageTag="pt-BR" android:imeSubtypeMode="keyboard" />
