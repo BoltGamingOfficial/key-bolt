@@ -6,4 +6,9 @@
     <string name="subtype_chinese">Chinese</string><string name="subtype_japanese">Japanese</string>
     <string name="subtype_korean">Korean</string><string name="subtype_arabic">Arabic</string>
     <string name="subtype_hindi">Hindi</string>
+    <string name="subtype_italian">Italian</string><string name="subtype_portuguese">Portuguese</string>
+    <string name="subtype_russian">Russian</string><string name="subtype_turkish">Turkish</string>
+    <string name="subtype_indonesian">Indonesian</string><string name="subtype_vietnamese">Vietnamese</string>
+    <string name="subtype_bengali">Bengali</string><string name="subtype_hebrew">Hebrew</string>
+    <string name="subtype_persian">Persian</string><string name="subtype_thai">Thai</string>
 </resources>

@@ -307,7 +307,7 @@ private fun ClipboardManagerScreen() {
     val context = LocalContext.current
     var folders by remember { mutableStateOf(KeyBoltPrefs.folders(context)) }
     var clips by remember { mutableStateOf(KeyBoltPrefs.clips(context)) }
-    var selectedFolder by remember { mutableStateOf(folders.first().id) }
+    var selectedFolder by remember { mutableStateOf(KeyBoltPrefs.activeFolder(context).takeIf { id -> folders.any { it.id == id } } ?: folders.first().id) }
     var clipText by remember { mutableStateOf("") }
     var newFolderName by remember { mutableStateOf("") }
     var showFolderDialog by remember { mutableStateOf(false) }
@@ -327,7 +327,7 @@ private fun ClipboardManagerScreen() {
                 folders.forEach { folder ->
                     FilterChip(
                         selected = selectedFolder == folder.id,
-                        onClick = { selectedFolder = folder.id },
+                        onClick = { selectedFolder = folder.id; KeyBoltPrefs.setActiveFolder(context, folder.id) },
                         label = { Text(folder.name) },
                         colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Gold, selectedLabelColor = Ink)
                     )
@@ -388,6 +388,7 @@ private fun ClipboardManagerScreen() {
                         folders = folders + folder
                         KeyBoltPrefs.saveFolders(context, folders)
                         selectedFolder = folder.id
+                        KeyBoltPrefs.setActiveFolder(context, folder.id)
                         newFolderName = ""
                     }
                     showFolderDialog = false

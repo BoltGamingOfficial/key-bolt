@@ -15,17 +15,27 @@ struct ContentView: View {
     }
 }
 
+private struct ThemePreset: Identifiable {
+    let name: String
+    let value: String
+    var id: String { name }
+}
+
 struct AppearanceView: View {
     @State private var layout = BoltShared.layout()
     @State private var mode = BoltShared.mode()
+    @State private var keyboardScale = BoltShared.defaults.object(forKey: "bolt.scale") as? Double ?? 1.0
     @State private var red = 214.0
     @State private var green = 166.0
     @State private var blue = 66.0
     @State private var hex = BoltShared.accentHex()
-    private let presets: [(String, String)] = [
-        ("Bolt Gold", "#D6A642"), ("Midnight", "#9CA3AF"),
-        ("Electric Blue", "#42A5F5"), ("Emerald", "#4CAF79"),
-        ("Rose", "#E58AA7"), ("Violet", "#AB8BEF")
+    private let presets: [ThemePreset] = [
+        ThemePreset(name: "Bolt Gold", value: "#D6A642"),
+        ThemePreset(name: "Midnight", value: "#9CA3AF"),
+        ThemePreset(name: "Electric Blue", value: "#42A5F5"),
+        ThemePreset(name: "Emerald", value: "#4CAF79"),
+        ThemePreset(name: "Rose", value: "#E58AA7"),
+        ThemePreset(name: "Violet", value: "#AB8BEF")
     ]
     private let layouts = ["QWERTY", "AZERTY", "QWERTZ", "DVORAK", "COLEMAK", "ALPHABETICAL"]
     private let modes = ["FULL", "ONE_HAND_LEFT", "ONE_HAND_RIGHT", "THUMB", "COMPACT"]
@@ -34,7 +44,9 @@ struct AppearanceView: View {
         NavigationStack {
             Form {
                 Section("Theme presets") {
-                    ForEach(presets, id: \.0) { name, value in
+                    ForEach(presets) { preset in
+                        let name = preset.name
+                        let value = preset.value
                         Button {
                             setColor(value)
                         } label: {
@@ -76,6 +88,9 @@ struct AppearanceView: View {
                         ForEach(modes, id: \.self) { Text($0.replacingOccurrences(of: "_", with: " ")).tag($0) }
                     }
                     .onChange(of: mode) { BoltShared.setMode($0) }
+                    HStack { Text("Keyboard size"); Spacer(); Text("\(Int(keyboardScale * 100))%").foregroundStyle(.secondary) }
+                    Slider(value: $keyboardScale, in: 0.8...1.2, step: 0.05)
+                        .onChange(of: keyboardScale) { BoltShared.defaults.set($0, forKey: "bolt.scale") }
                 }
                 Section("Enable the keyboard") {
                     Text("Open Settings → General → Keyboard → Keyboards → Add New Keyboard, then choose Key-Bolt. The system may display a warning for third-party keyboards; Key-Bolt does not request open access in this build.")
@@ -95,7 +110,7 @@ struct AppearanceView: View {
                 Spacer()
                 Text("\(Int(value.wrappedValue))").monospacedDigit().foregroundStyle(.secondary)
             }
-            Slider(value: value, in: 0...255, step: 1)
+            Slider(value: value, in: 0...255, step: 1) { _ in }
                 .tint(Color(hex: normalizedHex(hex)))
                 .onChange(of: value.wrappedValue) { _ in saveRGB() }
         }
@@ -110,17 +125,18 @@ struct AppearanceView: View {
     private func setColor(_ value: String) {
         hex = value
         BoltShared.setAccentHex(value)
-        let color = UIColor(Color(hex: value))
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        color.getRed(&r, green: &g, blue: &b, alpha: &a)
-        red = Double(r * 255); green = Double(g * 255); blue = Double(b * 255)
+        let cleaned = value.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        let number = UInt64(cleaned, radix: 16) ?? 0xD6A642
+        red = Double((number >> 16) & 0xFF)
+        green = Double((number >> 8) & 0xFF)
+        blue = Double(number & 0xFF)
     }
 }
 
 struct ClipboardView: View {
     @State private var folders = BoltShared.folders()
     @State private var clips = BoltShared.clips()
-    @State private var selectedFolder = "personal"
+    @State private var selectedFolder = BoltShared.defaults.string(forKey: "bolt.activeFolder") ?? "personal"
     @State private var snippet = ""
     @State private var folderName = ""
     @State private var showingFolder = false
@@ -140,7 +156,7 @@ struct ClipboardView: View {
                             if selectedFolder == folder.id { Image(systemName: "checkmark").foregroundStyle(.yellow) }
                         }
                         .contentShape(Rectangle())
-                        .onTapGesture { selectedFolder = folder.id }
+                        .onTapGesture { selectedFolder = folder.id; BoltShared.defaults.set(folder.id, forKey: "bolt.activeFolder") }
                     }
                     Button { showingFolder = true } label: { Label("Add collection", systemImage: "plus") }
                 }
@@ -195,6 +211,7 @@ struct ClipboardView: View {
                     folders.append(folder)
                     BoltShared.saveFolders(folders)
                     selectedFolder = folder.id
+                    BoltShared.defaults.set(folder.id, forKey: "bolt.activeFolder")
                     folderName = ""
                 }
                 Button("Cancel", role: .cancel) {}
@@ -261,14 +278,14 @@ struct PreferencesView: View {
                         .onChange(of: autocorrection) { BoltShared.defaults.set($0, forKey: "bolt.autocorrect") }
                     Toggle("Key haptics preference", isOn: $haptics)
                         .onChange(of: haptics) { BoltShared.defaults.set($0, forKey: "bolt.haptics") }
-                    Text("These preferences are saved for the next keyboard-engine milestone; native iOS dictation remains controlled by iOS.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                    Text("These preferences are saved for the next keyboard-engine milestone; native iOS dictation remains controlled by iOS.", font: .footnote)
+                        .foregroundStyle(.secondary)
                 }
                 Section("Privacy") {
                     Toggle("Start sessions in incognito", isOn: $incognito)
                         .onChange(of: incognito) { BoltShared.defaults.set($0, forKey: "bolt.incognitoDefault") }
-                    Text("Key-Bolt stores saved snippets locally in the app group. This extension does not request full access and does not read the system pasteboard.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                    Text("Key-Bolt stores saved snippets locally in the app group. This extension does not request full access and does not read the system pasteboard.", font: .footnote)
+                        .foregroundStyle(.secondary)
                 }
                 Section("About") {
                     LabeledContent("Version", value: "1.0.0 · Foundation")

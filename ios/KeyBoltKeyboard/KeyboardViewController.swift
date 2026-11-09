@@ -24,7 +24,9 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(white: 0.055, alpha: 1)
-        view.heightAnchor.constraint(equalToConstant: 264).isActive = true
+        let storedScale = BoltShared.defaults.object(forKey: "bolt.scale") as? Double ?? 1.0
+        let scale = CGFloat(min(max(storedScale, 0.8), 1.2))
+        view.heightAnchor.constraint(equalToConstant: 264 * scale).isActive = true
         buildKeyboard()
     }
 
@@ -42,12 +44,26 @@ final class KeyboardViewController: UIInputViewController {
         mainStack.spacing = 7
         mainStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(mainStack)
+        let mode = BoltShared.mode()
+        let widthFactor: CGFloat
+        switch mode {
+        case "ONE_HAND_LEFT", "ONE_HAND_RIGHT": widthFactor = 0.82
+        case "THUMB": widthFactor = 0.84
+        case "COMPACT": widthFactor = 0.92
+        default: widthFactor = 1.0
+        }
         NSLayoutConstraint.activate([
-            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 4),
-            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
+            mainStack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: widthFactor),
             mainStack.topAnchor.constraint(equalTo: view.topAnchor, constant: 5),
             mainStack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -5)
         ])
+        if mode == "ONE_HAND_LEFT" {
+            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 4).isActive = true
+        } else if mode == "ONE_HAND_RIGHT" {
+            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4).isActive = true
+        } else {
+            mainStack.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        }
         mainStack.addArrangedSubview(makeToolbar())
         if showingClips { buildClipPanel() }
         else if showingEmoji { buildEmojiPanel() }
@@ -128,7 +144,8 @@ final class KeyboardViewController: UIInputViewController {
             mainStack.addArrangedSubview(label)
             return
         }
-        let clips = BoltShared.clips().filter { !$0.text.isEmpty }.prefix(5)
+        let activeFolder = BoltShared.defaults.string(forKey: "bolt.activeFolder") ?? "personal"
+        let clips = BoltShared.clips().filter { $0.folderID == activeFolder && !$0.text.isEmpty }.prefix(5)
         if clips.isEmpty {
             let label = UILabel()
             label.text = "Save text clips in the Key-Bolt app"

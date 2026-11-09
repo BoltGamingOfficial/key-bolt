@@ -180,7 +180,7 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
         }
         if (clips.isEmpty()) {
             paint.color = 0xFFBDBDBD.toInt()
-            paint.textSize = dp(14f)
+            paint.textSize = sp(14f)
             paint.textAlign = Paint.Align.CENTER
             canvas.drawText("Save clips in the Key-Bolt app", width / 2f, height / 2f, paint)
         }
@@ -245,7 +245,8 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
             Panel.CLIPS -> {
                 if (service.incognito) return true
                 val index = ((y - dp(50f)) / dp(37f)).toInt()
-                val clip = KeyBoltPrefs.clips(context).getOrNull(index)
+                val activeFolder = KeyBoltPrefs.activeFolder(context)
+                val clip = KeyBoltPrefs.clips(context).filter { it.folderId == activeFolder }.getOrNull(index)
                 if (clip != null) {
                     if (clip.uri.isNotBlank()) service.commitImageOrDocument(android.net.Uri.parse(clip.uri), clip.displayName)
                     else service.insertText(clip.text)

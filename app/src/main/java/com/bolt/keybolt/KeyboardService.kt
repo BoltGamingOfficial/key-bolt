@@ -9,6 +9,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputContentInfo
+import android.view.inputmethod.InputConnection
 import android.widget.Toast
 import java.lang.ref.WeakReference
 
@@ -33,10 +34,12 @@ class KeyboardService : InputMethodService() {
         val type = attribute?.inputType ?: 0
         val variation = type and android.text.InputType.TYPE_MASK_VARIATION
         val isPassword = variation == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+            variation == android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
             variation == android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD ||
             variation == android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
-        secureField = isPassword
-        incognito = isPassword
+        val noPersonalizedLearning = ((attribute?.imeOptions ?: 0) and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING) != 0
+        secureField = isPassword || noPersonalizedLearning
+        incognito = secureField
         keyboard?.refresh()
     }
 
@@ -87,13 +90,19 @@ class KeyboardService : InputMethodService() {
     fun commitImageOrDocument(uri: Uri, displayName: String) {
         if (incognito || Build.VERSION.SDK_INT < 25) return
         val mime = contentResolver.getType(uri) ?: "application/octet-stream"
+        val editor = currentInputEditorInfo
+        val supported = editor?.contentMimeTypes ?: emptyArray()
+        val mimeAccepted = supported.any { it == mime || (it.endsWith("/*") && mime.startsWith(it.removeSuffix("*"))) }
+        if (!mimeAccepted) {
+            Toast.makeText(this, "The current app does not accept this attachment type", Toast.LENGTH_SHORT).show()
+            return
+        }
         val info = InputContentInfo(uri, ClipDescription(displayName, arrayOf(mime)), null)
         val connection = currentInputConnection ?: return
-        runCatching {
-            connection.commitContent(info, android.view.inputmethod.InputConnection.INPUT_CONTENT_GRANT_READ_URI_PERMISSION, Bundle())
-        }.onFailure {
-            Toast.makeText(this, "This app does not accept rich keyboard attachments", Toast.LENGTH_SHORT).show()
-        }
+        val accepted = runCatching {
+            connection.commitContent(info, InputConnection.INPUT_CONTENT_GRANT_READ_URI_PERMISSION, Bundle())
+        }.getOrDefault(false)
+        if (!accepted) Toast.makeText(this, "The current app declined this attachment", Toast.LENGTH_SHORT).show()
     }
 
     companion object {
