@@ -278,13 +278,13 @@ struct PreferencesView: View {
                         .onChange(of: autocorrection) { BoltShared.defaults.set($0, forKey: "bolt.autocorrect") }
                     Toggle("Key haptics preference", isOn: $haptics)
                         .onChange(of: haptics) { BoltShared.defaults.set($0, forKey: "bolt.haptics") }
-                    Text("These preferences are saved for the next keyboard-engine milestone; native iOS dictation remains controlled by iOS.", font: .footnote)
+                    Text("These preferences are saved for the next keyboard-engine milestone; native iOS dictation remains controlled by iOS.").font(.footnote)
                         .foregroundStyle(.secondary)
                 }
                 Section("Privacy") {
                     Toggle("Start sessions in incognito", isOn: $incognito)
                         .onChange(of: incognito) { BoltShared.defaults.set($0, forKey: "bolt.incognitoDefault") }
-                    Text("Key-Bolt stores saved snippets locally in the app group. This extension does not request full access and does not read the system pasteboard.", font: .footnote)
+                    Text("Key-Bolt stores saved snippets locally in the app group. This extension does not request full access and does not read the system pasteboard.").font(.footnote)
                         .foregroundStyle(.secondary)
                 }
                 Section("About") {
