@@ -139,12 +139,12 @@ private fun KeyboardSettings() {
     PageColumn {
         SectionCard("Get started", "Enable Key-Bolt, then choose it as your active keyboard.") {
             Text(if (enabled.value) "✓ Keyboard enabled in Android settings" else "Keyboard not enabled yet", color = if (enabled.value) Gold else Color(0xFFFFB86B))
-            ActionButton("Open keyboard settings") {
+            ActionButton("Open keyboard settings", onClick = {
                 context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }
-            ActionButton("Choose Key-Bolt keyboard") {
+            })
+            ActionButton("Choose Key-Bolt keyboard", onClick = {
                 (context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker()
-            }
+            })
         }
         SectionCard("Keyboard layout", "Choose the key arrangement. Composition dictionaries remain supplied by the operating system.") {
             Layouts.forEach { item ->
@@ -338,13 +338,13 @@ private fun ClipboardManagerScreen() {
             }
             OutlinedTextField(clipText, { clipText = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Paste or type a snippet") }, minLines = 3)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActionButton("Save text") {
+                ActionButton("Save text", onClick = {
                     if (clipText.isNotBlank()) {
                         clips = clips + KeyBoltPrefs.newClip(selectedFolder, text = clipText, color = activeColor)
                         KeyBoltPrefs.saveClips(context, clips)
                         clipText = ""
                     }
-                }
+                })
                 OutlinedButton(onClick = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "application/*")) }) {
                     Text("Add photo / file", color = Gold)
                 }
@@ -412,10 +412,10 @@ private fun EditorScreen() {
                 minLines = 10
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActionButton("Copy all text") { clipboard.setText(AnnotatedString(text)) }
+                ActionButton("Copy all text", onClick = { clipboard.setText(AnnotatedString(text)) })
                 OutlinedButton(onClick = { text = "" }) { Text("Clear", color = Gold) }
             }
-            Text("\${text.length} characters · \${text.split(Regex("\\s+")).count { it.isNotBlank() }} words", color = Color.LightGray, fontSize = 12.sp)
+            Text("${text.length} characters · ${text.split(Regex("\\s+")).count { it.isNotBlank() }} words", color = Color.LightGray, fontSize = 12.sp)
         }
     }
 }
