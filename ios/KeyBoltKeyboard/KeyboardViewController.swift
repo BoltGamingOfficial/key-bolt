@@ -9,7 +9,7 @@ final class KeyboardViewController: UIInputViewController {
     private var incognito = BoltShared.defaults.bool(forKey: "bolt.incognitoDefault")
     private var keyRows: [String] {
         if symbols {
-            return ["1234567890", "@#\$%&-+()", "*/:;!?'"]
+            return ["1234567890", "@#$%&-+()", "*/:;!?'"]
         }
         switch BoltShared.layout() {
         case "AZERTY": return ["azertyuiop", "qsdfghjklm", "wxcvbn"]
