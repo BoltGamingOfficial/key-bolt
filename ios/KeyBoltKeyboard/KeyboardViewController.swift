@@ -106,7 +106,7 @@ final class KeyboardViewController: UIInputViewController {
             }
             for character in letters {
                 let displayed = shifted ? String(character).uppercased() : String(character)
-                row.addArrangedSubview(makeKey(displayed) { [weak self] in
+                row.addArrangedSubview(makeKey(displayed, special: false) { [weak self] in
                     guard let self else { return }
                     self.textDocumentProxy.insertText(displayed)
                     if self.shifted { self.shifted = false; self.buildKeyboard() }
