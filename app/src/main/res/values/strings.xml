@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Key-Bolt</string>
+    <string name="subtype_english">English</string><string name="subtype_french">French</string>
+    <string name="subtype_german">German</string><string name="subtype_spanish">Spanish</string>
+    <string name="subtype_chinese">Chinese</string><string name="subtype_japanese">Japanese</string>
+    <string name="subtype_korean">Korean</string><string name="subtype_arabic">Arabic</string>
+    <string name="subtype_hindi">Hindi</string>
+</resources>

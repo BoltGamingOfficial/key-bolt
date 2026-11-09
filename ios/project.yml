@@ -1,0 +1,41 @@
+name: KeyBolt
+options:
+  bundleIdPrefix: com.bolt
+  deploymentTarget:
+    iOS: "16.0"
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+targets:
+  KeyBolt:
+    type: application
+    platform: iOS
+    sources:
+      - path: KeyBolt
+        excludes: [Info.plist, KeyBolt.entitlements]
+    dependencies:
+      - target: KeyBoltKeyboard
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bolt.keybolt
+        PRODUCT_NAME: Key-Bolt
+        INFOPLIST_FILE: KeyBolt/Info.plist
+        CODE_SIGN_ENTITLEMENTS: KeyBolt/KeyBolt.entitlements
+  KeyBoltKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: KeyBoltKeyboard
+        excludes: [Info.plist, KeyBoltKeyboard.entitlements]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bolt.keybolt.keyboard
+        PRODUCT_NAME: KeyBoltKeyboard
+        INFOPLIST_FILE: KeyBoltKeyboard/Info.plist
+        CODE_SIGN_ENTITLEMENTS: KeyBoltKeyboard/KeyBoltKeyboard.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
