@@ -252,7 +252,7 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
             paint.color = 0xFFF4F0E5.toInt()
             paint.textAlign = Paint.Align.LEFT
             paint.textSize = sp(12f)
-            val preview = if (clip.uri.isBlank()) clip.text else "FILE  ·  \${clip.displayName}"
+            val preview = if (clip.uri.isBlank()) clip.text else "FILE  ·  ${clip.displayName}"
             canvas.drawText(preview.take(72), dp(17f), y, paint)
         }
         if (clips.isEmpty()) {
