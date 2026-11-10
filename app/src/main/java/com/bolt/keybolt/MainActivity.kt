@@ -409,7 +409,7 @@ private fun ClipboardManagerScreen() {
                     Text("Rename / color", color = Gold)
                 }
             }
-            Text("Tab background · \${KeyBoltPrefs.hex(selectedFolderData.color)}", color = Color.LightGray, fontSize = 12.sp)
+            Text("Tab background · ${KeyBoltPrefs.hex(selectedFolderData.color)}", color = Color.LightGray, fontSize = 12.sp)
             OutlinedTextField(
                 value = clipText,
                 onValueChange = { clipText = it },
@@ -433,7 +433,7 @@ private fun ClipboardManagerScreen() {
                 }) { Text("Add file", color = Gold) }
             }
         }
-        SectionCard("Saved items · \${clips.count { it.folderId == selectedFolder }}") {
+        SectionCard("Saved items · ${clips.count { it.folderId == selectedFolder }}") {
             val visible = clips.filter { it.folderId == selectedFolder }
             if (visible.isEmpty()) Text("This tab is empty. Add an item above or copy text while Key-Bolt is active.", color = Color.LightGray)
             visible.forEach { clip ->
@@ -442,7 +442,7 @@ private fun ClipboardManagerScreen() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(if (clip.uri.isBlank()) clip.text.take(240) else "📎 \${clip.displayName}", color = WarmWhite, maxLines = 5)
+                        Text(if (clip.uri.isBlank()) clip.text.take(240) else "📎 ${clip.displayName}", color = WarmWhite, maxLines = 5)
                         Text(if (clip.uri.isBlank()) "Text snippet" else "Saved attachment reference", color = Color.LightGray, fontSize = 11.sp)
                     }
                     IconButton(onClick = {
