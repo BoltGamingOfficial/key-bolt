@@ -1,6 +1,8 @@
 package com.bolt.keybolt
 
 import android.content.ClipDescription
+import android.content.ClipboardManager
+import android.content.Context
 import android.inputmethodservice.InputMethodService
 import android.net.Uri
 import android.os.Build
@@ -18,10 +20,45 @@ class KeyboardService : InputMethodService() {
     var incognito: Boolean = false
         private set
     private var secureField: Boolean = false
+    private val clipboardManager by lazy {
+        getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    }
+    private val clipboardListener = ClipboardManager.OnPrimaryClipChangedListener {
+        if (!incognito && !secureField && isInputViewShown) {
+            runCatching {
+                val clip = clipboardManager.primaryClip ?: return@runCatching
+                if (clip.itemCount == 0) return@runCatching
+                val copiedText = clip.getItemAt(0).coerceToText(this)?.toString()?.trim()
+                if (!copiedText.isNullOrEmpty()) {
+                    val folders = KeyBoltPrefs.folders(this)
+                    val folder = folders.firstOrNull { it.id == KeyBoltPrefs.activeFolder(this) }
+                        ?: folders.first()
+                    val saved = KeyBoltPrefs.clips(this)
+                    val duplicate = saved.any {
+                        it.folderId == folder.id && it.uri.isBlank() && it.text == copiedText
+                    }
+                    if (!duplicate) {
+                        val updated = listOf(
+                            KeyBoltPrefs.newClip(folder.id, text = copiedText, color = folder.color)
+                        ) + saved
+                        KeyBoltPrefs.saveClips(this, updated.take(100))
+                        keyboard?.refresh()
+                    }
+                }
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
         current = WeakReference(this)
+        clipboardManager.addPrimaryClipChangedListener(clipboardListener)
+    }
+
+    override fun onDestroy() {
+        runCatching { clipboardManager.removePrimaryClipChangedListener(clipboardListener) }
+        if (current?.get() === this) current = null
+        super.onDestroy()
     }
 
     override fun onCreateInputView(): View {

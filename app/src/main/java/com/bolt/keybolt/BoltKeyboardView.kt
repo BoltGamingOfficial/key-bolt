@@ -14,8 +14,8 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
     private var symbols = false
     private var panel = Panel.KEYS
     private val density = resources.displayMetrics.density
-    private val gold get() = KeyBoltPrefs.accent(context)
-    private val ink = 0xFF171717.toInt()
+    private val gold get() = if (service.incognito) 0xFF929292.toInt() else KeyBoltPrefs.accent(context)
+    private val ink get() = if (service.incognito) 0xFFF0F0F0.toInt() else 0xFF171717.toInt()
     private enum class Panel { KEYS, CLIPS, EMOJI }
     private fun dp(value: Float) = value * density
     private fun sp(value: Float) = value * resources.displayMetrics.scaledDensity
@@ -27,7 +27,7 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawColor(0xFF101010.toInt())
+        canvas.drawColor(if (service.incognito) 0xFF080808.toInt() else 0xFF101010.toInt())
         drawToolbar(canvas)
         when (panel) {
             Panel.KEYS -> drawKeys(canvas)
@@ -38,21 +38,41 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
 
     private fun drawToolbar(canvas: Canvas) {
         val h = dp(43f)
-        paint.color = 0xFF1B1B1B.toInt()
+        paint.color = if (service.incognito) 0xFF141414.toInt() else 0xFF1B1B1B.toInt()
         canvas.drawRect(0f, 0f, width.toFloat(), h, paint)
-        val labels = listOf(if (symbols) "ABC" else "123", "🌐", "🎙", "📋", "☺", if (service.incognito) "◉" else "○")
+        val labels = listOf(if (symbols) "ABC" else "123", "🌐", "🎙", "📋", "☺", "")
+        if (service.incognito) drawIncognitoIcon(canvas, width - width / 12f, h * .52f) else {
+            paint.color = 0xFFBDBDBD.toInt()
+            paint.textSize = sp(19f)
+            paint.textAlign = Paint.Align.CENTER
+            canvas.drawText("◉", width - width / 12f, h * .68f, paint)
+        }
         val cell = width / labels.size.toFloat()
         labels.forEachIndexed { index, label ->
             val active = (index == 3 && panel == Panel.CLIPS) || (index == 4 && panel == Panel.EMOJI) || (index == 5 && service.incognito)
             paint.color = if (active) gold else 0xFFBDBDBD.toInt()
             paint.textSize = sp(17f)
             paint.textAlign = Paint.Align.CENTER
-            canvas.drawText(label, cell * (index + .5f), h * .67f, paint)
+            if (label.isNotEmpty()) canvas.drawText(label, cell * (index + .5f), h * .67f, paint)
             if (active) {
                 paint.color = gold
                 canvas.drawRoundRect(cell * index + dp(9f), h - dp(3f), cell * (index + 1) - dp(9f), h - dp(1f), dp(2f), dp(2f), paint)
             }
         }
+    }
+
+
+    private fun drawIncognitoIcon(canvas: Canvas, centerX: Float, centerY: Float) {
+        val radius = dp(9f)
+        paint.color = 0xFFD0D0D0.toInt()
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = dp(1.8f)
+        canvas.drawCircle(centerX, centerY, radius, paint)
+        canvas.drawLine(centerX - radius * .72f, centerY + radius * .72f,
+            centerX + radius * .72f, centerY - radius * .72f, paint)
+        paint.style = Paint.Style.FILL
+        paint.color = 0xFF929292.toInt()
+        canvas.drawCircle(centerX, centerY, dp(2f), paint)
     }
 
     private data class Key(val label: String, val weight: Float = 1f, val special: Boolean = false)
@@ -129,7 +149,9 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
             row.forEach { key ->
                 val keyWidth = rowWidth * key.weight / totalWeight
                 val rect = RectF(x, y, x + keyWidth, y + rowHeight)
-                paint.color = if (key.special) 0xFF9B782E.toInt() else gold
+                paint.color = if (service.incognito) {
+                    if (key.special) 0xFF505050.toInt() else 0xFF303030.toInt()
+                } else if (key.special) 0xFF9B782E.toInt() else gold
                 canvas.drawRoundRect(rect, dp(7f), dp(7f), paint)
                 paint.color = ink
                 paint.textAlign = Paint.Align.CENTER

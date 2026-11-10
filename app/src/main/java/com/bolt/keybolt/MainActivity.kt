@@ -53,11 +53,32 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun KeyBoltApp() {
+    val context = LocalContext.current
+    var showKeyboardSetup by remember { mutableStateOf(!isKeyboardDefault(context)) }
     var page by remember { mutableIntStateOf(0) }
     MaterialTheme(colorScheme = darkColorScheme(
         primary = Gold, secondary = Gold, background = Ink, surface = CardSurface,
         onPrimary = Ink, onBackground = WarmWhite, onSurface = WarmWhite
     )) {
+        if (showKeyboardSetup) {
+            AlertDialog(
+                onDismissRequest = { showKeyboardSetup = false },
+                title = { Text("Make Key-Bolt your keyboard?") },
+                text = {
+                    Text("Key-Bolt is not currently selected as your active keyboard. Android requires you to confirm this in its keyboard picker.")
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showKeyboardSetup = false
+                        (context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+                            .showInputMethodPicker()
+                    }) { Text("YES") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showKeyboardSetup = false }) { Text("Not now") }
+                }
+            )
+        }
         Scaffold(
             containerColor = Ink,
             bottomBar = {
@@ -438,4 +459,10 @@ private fun queryDisplayName(context: Context, uri: Uri): String {
 private fun isKeyboardEnabled(context: Context): Boolean {
     val enabled = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_INPUT_METHODS) ?: return false
     return enabled.contains("\${context.packageName}/.KeyboardService") || enabled.contains("com.bolt.keybolt/.KeyboardService")
+}
+
+
+private fun isKeyboardDefault(context: Context): Boolean {
+    val selected = Settings.Secure.getString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD) ?: return false
+    return selected.contains("\${context.packageName}/.KeyboardService") || selected.contains("com.bolt.keybolt/.KeyboardService")
 }
