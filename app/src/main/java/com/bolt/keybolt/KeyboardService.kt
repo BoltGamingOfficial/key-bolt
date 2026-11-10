@@ -144,6 +144,10 @@ class KeyboardService : InputMethodService() {
 
     companion object {
         private var current: WeakReference<KeyboardService>? = null
-        fun commitVoiceResult(text: String) { current?.get()?.insertText(text) }
+        fun commitVoiceResult(text: String): Boolean {
+            val service = current?.get() ?: return false
+            val connection = service.currentInputConnection ?: return false
+            return runCatching { connection.commitText(text, 1) }.getOrDefault(false)
+        }
     }
 }

@@ -13,10 +13,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -194,7 +197,7 @@ private fun KeyboardSettings() {
                     Text(item.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }, color = WarmWhite)
                 }
             }
-            Text("Keyboard size · \${(scale * 100).toInt()}%", color = WarmWhite)
+            Text("Keyboard size · ${(scale * 100).toInt()}%", color = WarmWhite)
             Slider(value = scale, onValueChange = {
                 scale = it
                 KeyBoltPrefs.setKeyScale(context, it)
@@ -249,11 +252,11 @@ private fun ThemeSettings() {
                     }, colors = RadioButtonDefaults.colors(selectedColor = Gold))
                 }
             }
-            Text("Red · \${red.toInt()}", color = WarmWhite)
+            Text("Red · ${red.toInt()}", color = WarmWhite)
             Slider(red, { red = it; applyColor(red, green, blue) }, valueRange = 0f..255f)
-            Text("Green · \${green.toInt()}", color = WarmWhite)
+            Text("Green · ${green.toInt()}", color = WarmWhite)
             Slider(green, { green = it; applyColor(red, green, blue) }, valueRange = 0f..255f)
-            Text("Blue · \${blue.toInt()}", color = WarmWhite)
+            Text("Blue · ${blue.toInt()}", color = WarmWhite)
             Slider(blue, { blue = it; applyColor(red, green, blue) }, valueRange = 0f..255f)
             OutlinedTextField(
                 value = hex, onValueChange = { candidate ->
@@ -270,7 +273,7 @@ private fun ThemeSettings() {
                 label = { Text("HEX color · e.g. #D6A642") },
                 singleLine = true
             )
-            Text("RGB \${red.toInt()}, \${green.toInt()}, \${blue.toInt()}", color = Color.LightGray, fontSize = 12.sp)
+            Text("RGB ${red.toInt()}, ${green.toInt()}, ${blue.toInt()}", color = Color.LightGray, fontSize = 12.sp)
         }
     }
 }
@@ -328,92 +331,171 @@ private fun ClipboardManagerScreen() {
     val context = LocalContext.current
     var folders by remember { mutableStateOf(KeyBoltPrefs.folders(context)) }
     var clips by remember { mutableStateOf(KeyBoltPrefs.clips(context)) }
-    var selectedFolder by remember { mutableStateOf(KeyBoltPrefs.activeFolder(context).takeIf { id -> folders.any { it.id == id } } ?: folders.first().id) }
+    var selectedFolder by remember {
+        mutableStateOf(KeyBoltPrefs.activeFolder(context).takeIf { id -> folders.any { it.id == id } } ?: folders.first().id)
+    }
     var clipText by remember { mutableStateOf("") }
-    var newFolderName by remember { mutableStateOf("") }
     var showFolderDialog by remember { mutableStateOf(false) }
-    var activeColor by remember { mutableIntStateOf(0xFF252525.toInt()) }
-    val colors = listOf(0xFF252525.toInt(), 0xFF3C2F1A.toInt(), 0xFF233B34.toInt(), 0xFF25374A.toInt(), 0xFF472C3B.toInt(), 0xFF3B3154.toInt())
+    var editingFolderId by remember { mutableStateOf<String?>(null) }
+    var folderName by remember { mutableStateOf("") }
+    var folderHex by remember { mutableStateOf("#D6A642") }
+    val selectedFolderData = folders.firstOrNull { it.id == selectedFolder } ?: folders.first()
+
+    DisposableEffect(context) {
+        val preferences = context.getSharedPreferences("key_bolt_preferences", Context.MODE_PRIVATE)
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            when (key) {
+                "saved_clips" -> clips = KeyBoltPrefs.clips(context)
+                "clip_folders" -> {
+                    folders = KeyBoltPrefs.folders(context)
+                    if (folders.none { it.id == selectedFolder }) selectedFolder = folders.first().id
+                }
+            }
+        }
+        preferences.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri?.let {
             runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
             val name = queryDisplayName(context, it)
-            clips = clips + KeyBoltPrefs.newClip(selectedFolder, uri = it.toString(), displayName = name, color = activeColor)
-            KeyBoltPrefs.saveClips(context, clips)
+            val updated = listOf(
+                KeyBoltPrefs.newClip(selectedFolder, uri = it.toString(), displayName = name, color = selectedFolderData.color)
+            ) + clips
+            clips = updated
+            KeyBoltPrefs.saveClips(context, updated)
         }
     }
+
     PageColumn {
-        SectionCard("Your clip collections", "Create named spaces for snippets, photos and documents.") {
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+        SectionCard("Clipboard browser", "Your saved snippets and attachments, organized into customizable tabs.") {
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 folders.forEach { folder ->
                     FilterChip(
                         selected = selectedFolder == folder.id,
-                        onClick = { selectedFolder = folder.id; KeyBoltPrefs.setActiveFolder(context, folder.id) },
+                        onClick = {
+                            selectedFolder = folder.id
+                            KeyBoltPrefs.setActiveFolder(context, folder.id)
+                        },
                         label = { Text(folder.name) },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Gold, selectedLabelColor = Ink)
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(folder.color),
+                            selectedLabelColor = WarmWhite
+                        )
                     )
                 }
-                IconButton(onClick = { showFolderDialog = true }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Add collection", tint = Gold)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ActionButton("＋ New tab", onClick = {
+                    editingFolderId = null
+                    folderName = ""
+                    folderHex = "#D6A642"
+                    showFolderDialog = true
+                })
+                Spacer(Modifier.width(8.dp))
+                OutlinedButton(onClick = {
+                    editingFolderId = selectedFolderData.id
+                    folderName = selectedFolderData.name
+                    folderHex = KeyBoltPrefs.hex(selectedFolderData.color)
+                    showFolderDialog = true
+                }) {
+                    Icon(Icons.Default.Edit, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Rename / color", color = Gold)
                 }
             }
-            OutlinedTextField(clipText, { clipText = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Paste or type a snippet") }, minLines = 3)
+            Text("Tab background · \${KeyBoltPrefs.hex(selectedFolderData.color)}", color = Color.LightGray, fontSize = 12.sp)
+            OutlinedTextField(
+                value = clipText,
+                onValueChange = { clipText = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Write a saved item") },
+                minLines = 3
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActionButton("Save text", onClick = {
+                ActionButton("＋ Add to tab", onClick = {
                     if (clipText.isNotBlank()) {
-                        clips = clips + KeyBoltPrefs.newClip(selectedFolder, text = clipText, color = activeColor)
-                        KeyBoltPrefs.saveClips(context, clips)
+                        val updated = listOf(
+                            KeyBoltPrefs.newClip(selectedFolder, text = clipText, color = selectedFolderData.color)
+                        ) + clips
+                        clips = updated
+                        KeyBoltPrefs.saveClips(context, updated)
                         clipText = ""
                     }
                 })
-                OutlinedButton(onClick = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "application/*")) }) {
-                    Text("Add photo / file", color = Gold)
-                }
-            }
-            Text("Card background", color = WarmWhite, fontWeight = FontWeight.Medium)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                colors.forEach { color ->
-                    Box(Modifier.size(30.dp).background(Color(color), RoundedCornerShape(8.dp)).clickable { activeColor = color })
-                }
+                OutlinedButton(onClick = {
+                    filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "application/*"))
+                }) { Text("Add file", color = Gold) }
             }
         }
         SectionCard("Saved items · \${clips.count { it.folderId == selectedFolder }}") {
             val visible = clips.filter { it.folderId == selectedFolder }
-            if (visible.isEmpty()) Text("Nothing saved in this collection yet.", color = Color.LightGray)
+            if (visible.isEmpty()) Text("This tab is empty. Add an item above or copy text while Key-Bolt is active.", color = Color.LightGray)
             visible.forEach { clip ->
                 Row(
-                    Modifier.fillMaxWidth().background(Color(clip.color), RoundedCornerShape(10.dp)).padding(10.dp),
+                    Modifier.fillMaxWidth().background(Color(clip.color), RoundedCornerShape(12.dp)).padding(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(if (clip.uri.isBlank()) clip.text.take(180) else "📎 \${clip.displayName}", color = WarmWhite, maxLines = 4)
+                        Text(if (clip.uri.isBlank()) clip.text.take(240) else "📎 \${clip.displayName}", color = WarmWhite, maxLines = 5)
                         Text(if (clip.uri.isBlank()) "Text snippet" else "Saved attachment reference", color = Color.LightGray, fontSize = 11.sp)
                     }
                     IconButton(onClick = {
-                        clips = clips.filterNot { it.id == clip.id }
-                        KeyBoltPrefs.saveClips(context, clips)
-                    }) { Icon(Icons.Default.Delete, contentDescription = "Delete clip", tint = Color.LightGray) }
+                        val updated = clips.filterNot { it.id == clip.id }
+                        clips = updated
+                        KeyBoltPrefs.saveClips(context, updated)
+                    }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete item", tint = Color.LightGray)
+                    }
                 }
             }
         }
     }
+
     if (showFolderDialog) {
         AlertDialog(
             onDismissRequest = { showFolderDialog = false },
-            title = { Text("New collection") },
-            text = { OutlinedTextField(newFolderName, { newFolderName = it }, label = { Text("Collection name") }) },
+            title = { Text(if (editingFolderId == null) "Create clipboard tab" else "Customize clipboard tab") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(value = folderName, onValueChange = { folderName = it }, label = { Text("Tab name") }, singleLine = true)
+                    OutlinedTextField(
+                        value = folderHex,
+                        onValueChange = { folderHex = it },
+                        label = { Text("Background HEX · #RRGGBB") },
+                        supportingText = { Text("Enter any RGB color as a six-digit HEX value.") },
+                        singleLine = true
+                    )
+                    KeyBoltPrefs.parseHex(folderHex)?.let { color ->
+                        Box(Modifier.fillMaxWidth().height(34.dp).background(Color(color), RoundedCornerShape(8.dp)))
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
-                    if (newFolderName.isNotBlank()) {
-                        val folder = KeyBoltPrefs.newFolder(newFolderName)
-                        folders = folders + folder
+                    val name = folderName.trim()
+                    val color = KeyBoltPrefs.parseHex(folderHex)
+                    if (name.isNotEmpty() && color != null) {
+                        val editingId = editingFolderId
+                        if (editingId == null) {
+                            val folder = KeyBoltPrefs.newFolder(name, color)
+                            folders = folders + folder
+                            selectedFolder = folder.id
+                            KeyBoltPrefs.setActiveFolder(context, folder.id)
+                        } else {
+                            folders = folders.map { folder ->
+                                if (folder.id == editingId) folder.copy(name = name, color = color) else folder
+                            }
+                        }
                         KeyBoltPrefs.saveFolders(context, folders)
-                        selectedFolder = folder.id
-                        KeyBoltPrefs.setActiveFolder(context, folder.id)
-                        newFolderName = ""
+                        showFolderDialog = false
                     }
-                    showFolderDialog = false
-                }) { Text("Create") }
+                }) { Text("Save") }
             },
             dismissButton = { TextButton(onClick = { showFolderDialog = false }) { Text("Cancel") } }
         )
@@ -458,11 +540,11 @@ private fun queryDisplayName(context: Context, uri: Uri): String {
 
 private fun isKeyboardEnabled(context: Context): Boolean {
     val enabled = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_INPUT_METHODS) ?: return false
-    return enabled.contains("\${context.packageName}/.KeyboardService") || enabled.contains("com.bolt.keybolt/.KeyboardService")
+    return enabled.contains("${context.packageName}/.KeyboardService") || enabled.contains("com.bolt.keybolt/.KeyboardService")
 }
 
 
 private fun isKeyboardDefault(context: Context): Boolean {
     val selected = Settings.Secure.getString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD) ?: return false
-    return selected.contains("\${context.packageName}/.KeyboardService") || selected.contains("com.bolt.keybolt/.KeyboardService")
+    return selected.contains("${context.packageName}/.KeyboardService") || selected.contains("com.bolt.keybolt/.KeyboardService")
 }
