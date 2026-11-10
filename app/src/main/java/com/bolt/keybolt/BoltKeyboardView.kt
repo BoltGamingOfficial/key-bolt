@@ -38,29 +38,88 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
 
     private fun drawToolbar(canvas: Canvas) {
         val h = dp(43f)
-        paint.color = if (service.incognito) 0xFF141414.toInt() else 0xFF1B1B1B.toInt()
+        paint.color = if (service.incognito) 0xFF171717.toInt() else 0xFF242424.toInt()
         canvas.drawRect(0f, 0f, width.toFloat(), h, paint)
-        val labels = listOf(if (symbols) "ABC" else "123", "🌐", "🎙", "📋", "☺", "")
-        if (service.incognito) drawIncognitoIcon(canvas, width - width / 12f, h * .52f) else {
-            paint.color = 0xFFBDBDBD.toInt()
-            paint.textSize = sp(19f)
-            paint.textAlign = Paint.Align.CENTER
-            canvas.drawText("◉", width - width / 12f, h * .68f, paint)
-        }
-        val cell = width / labels.size.toFloat()
-        labels.forEachIndexed { index, label ->
-            val active = (index == 3 && panel == Panel.CLIPS) || (index == 4 && panel == Panel.EMOJI) || (index == 5 && service.incognito)
-            paint.color = if (active) gold else 0xFFBDBDBD.toInt()
-            paint.textSize = sp(17f)
-            paint.textAlign = Paint.Align.CENTER
-            if (label.isNotEmpty()) canvas.drawText(label, cell * (index + .5f), h * .67f, paint)
-            if (active) {
-                paint.color = gold
-                canvas.drawRoundRect(cell * index + dp(9f), h - dp(3f), cell * (index + 1) - dp(9f), h - dp(1f), dp(2f), dp(2f), paint)
+
+        val cell = width / 6f
+        val activeColor = if (service.incognito) 0xFFE0E0E0.toInt() else 0xFFD5A640.toInt()
+        val idleColor = 0xFFB8B8B8.toInt()
+        val active = listOf(false, false, false, panel == Panel.CLIPS, panel == Panel.EMOJI, service.incognito)
+
+        for (index in 0..5) {
+            val cx = cell * (index + .5f)
+            val cy = h * .49f
+            paint.color = if (active[index]) activeColor else idleColor
+            when (index) {
+                0 -> {
+                    paint.textAlign = Paint.Align.CENTER
+                    paint.textSize = sp(14f)
+                    canvas.drawText(if (symbols) "ABC" else "123", cx, h * .68f, paint)
+                }
+                1 -> drawGlobeIcon(canvas, cx, cy, dp(9f))
+                2 -> drawMicrophoneIcon(canvas, cx, cy, dp(9f))
+                3 -> drawClipboardIcon(canvas, cx, cy, dp(9f))
+                4 -> drawSmileyIcon(canvas, cx, cy, dp(9f))
+                5 -> drawIncognitoIcon(canvas, cx, cy)
+            }
+            if (active[index]) {
+                paint.style = Paint.Style.FILL
+                paint.color = activeColor
+                canvas.drawRoundRect(cell * index + dp(13f), h - dp(3f),
+                    cell * (index + 1) - dp(13f), h - dp(1f), dp(1f), dp(1f), paint)
             }
         }
     }
 
+    private fun iconPaint(color: Int) {
+        paint.color = color
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = dp(1.7f)
+        paint.strokeCap = Paint.Cap.ROUND
+        paint.strokeJoin = Paint.Join.ROUND
+    }
+
+    private fun drawGlobeIcon(canvas: Canvas, x: Float, y: Float, r: Float) {
+        iconPaint(paint.color)
+        canvas.drawCircle(x, y, r, paint)
+        canvas.drawOval(RectF(x - r * .48f, y - r, x + r * .48f, y + r), paint)
+        canvas.drawLine(x - r * .9f, y, x + r * .9f, y, paint)
+        canvas.drawArc(x - r, y - r * .48f, x + r, y + r * .48f, 0f, 180f, false, paint)
+        canvas.drawArc(x - r, y - r * .48f, x + r, y + r * .48f, 180f, 180f, false, paint)
+        paint.style = Paint.Style.FILL
+    }
+
+    private fun drawMicrophoneIcon(canvas: Canvas, x: Float, y: Float, r: Float) {
+        iconPaint(paint.color)
+        val capsule = RectF(x - r * .38f, y - r, x + r * .38f, y + r * .35f)
+        canvas.drawRoundRect(capsule, r, r, paint)
+        canvas.drawArc(x - r * .78f, y - r * .18f, x + r * .78f, y + r * 1.12f, 0f, 180f, false, paint)
+        canvas.drawLine(x, y + r * 1.12f, x, y + r * 1.5f, paint)
+        canvas.drawLine(x - r * .48f, y + r * 1.5f, x + r * .48f, y + r * 1.5f, paint)
+        paint.style = Paint.Style.FILL
+    }
+
+    private fun drawClipboardIcon(canvas: Canvas, x: Float, y: Float, r: Float) {
+        iconPaint(paint.color)
+        canvas.drawRoundRect(RectF(x - r * .78f, y - r * .72f, x + r * .78f, y + r),
+            dp(2f), dp(2f), paint)
+        canvas.drawRoundRect(RectF(x - r * .34f, y - r * 1.08f, x + r * .34f, y - r * .52f),
+            dp(2f), dp(2f), paint)
+        canvas.drawLine(x - r * .42f, y - r * .12f, x + r * .42f, y - r * .12f, paint)
+        canvas.drawLine(x - r * .42f, y + r * .25f, x + r * .42f, y + r * .25f, paint)
+        paint.style = Paint.Style.FILL
+    }
+
+    private fun drawSmileyIcon(canvas: Canvas, x: Float, y: Float, r: Float) {
+        iconPaint(paint.color)
+        canvas.drawCircle(x, y, r, paint)
+        paint.style = Paint.Style.FILL
+        canvas.drawCircle(x - r * .34f, y - r * .2f, dp(1.1f), paint)
+        canvas.drawCircle(x + r * .34f, y - r * .2f, dp(1.1f), paint)
+        paint.style = Paint.Style.STROKE
+        canvas.drawArc(x - r * .48f, y - r * .12f, x + r * .48f, y + r * .62f, 15f, 150f, false, paint)
+        paint.style = Paint.Style.FILL
+    }
 
     private fun drawIncognitoIcon(canvas: Canvas, centerX: Float, centerY: Float) {
         val radius = dp(9f)
@@ -149,36 +208,31 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
             row.forEach { key ->
                 val keyWidth = rowWidth * key.weight / totalWeight
                 val rect = RectF(x, y, x + keyWidth, y + rowHeight)
+                val isSpace = key.label == "space"
                 paint.color = if (service.incognito) {
-                    if (key.special) 0xFF505050.toInt() else 0xFF303030.toInt()
-                } else if (key.special) 0xFF9B782E.toInt() else gold
-                canvas.drawRoundRect(rect, dp(7f), dp(7f), paint)
-                paint.color = ink
+                    if (key.special) 0xFF454545.toInt() else 0xFF292929.toInt()
+                } else when {
+                    isSpace -> 0xFF37383B.toInt()
+                    key.special -> 0xFFD0A044.toInt()
+                    else -> 0xFFF0EEE8.toInt()
+                }
+                canvas.drawRoundRect(rect, dp(6f), dp(6f), paint)
+
+                paint.color = when {
+                    service.incognito -> 0xFFF1F1F1.toInt()
+                    isSpace -> 0xFFF4F1E9.toInt()
+                    else -> 0xFF242424.toInt()
+                }
                 paint.textAlign = Paint.Align.CENTER
-                paint.textSize = if (key.label == "space") sp(10f) else sp(19f) * scale.coerceIn(.9f, 1.1f)
+                paint.textSize = if (isSpace) sp(10f) else sp(if (key.special) 17f else 21f) * scale.coerceIn(.9f, 1.1f)
                 val label = when (key.label) {
                     "space" -> "English"
                     else -> if (shifted) key.label.uppercase() else key.label.lowercase()
                 }
-                canvas.drawText(label, rect.centerX(), rect.centerY() + dp(6f), paint)
-                if (!key.special && key.label.length == 1) drawBolt(canvas, rect.centerX(), rect.bottom - dp(5f), dp(3.5f))
+                canvas.drawText(label, rect.centerX(), rect.centerY() + dp(if (isSpace) 3f else 7f), paint)
                 x += keyWidth + dp(6f)
             }
         }
-    }
-
-    private fun drawBolt(canvas: Canvas, x: Float, y: Float, size: Float) {
-        val path = Path().apply {
-            moveTo(x + size * .25f, y - size)
-            lineTo(x - size * .15f, y - size * .12f)
-            lineTo(x + size * .1f, y - size * .12f)
-            lineTo(x - size * .22f, y + size)
-            lineTo(x + size * .12f, y + size * .16f)
-            lineTo(x - size * .03f, y + size * .16f)
-            close()
-        }
-        paint.color = 0xFF161616.toInt()
-        canvas.drawPath(path, paint)
     }
 
     private fun drawClips(canvas: Canvas) {
@@ -198,7 +252,7 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
             paint.color = 0xFFF4F0E5.toInt()
             paint.textAlign = Paint.Align.LEFT
             paint.textSize = sp(12f)
-            val preview = if (clip.uri.isBlank()) clip.text else "📎 \${clip.displayName}"
+            val preview = if (clip.uri.isBlank()) clip.text else "FILE  ·  \${clip.displayName}"
             canvas.drawText(preview.take(72), dp(17f), y, paint)
         }
         if (clips.isEmpty()) {
