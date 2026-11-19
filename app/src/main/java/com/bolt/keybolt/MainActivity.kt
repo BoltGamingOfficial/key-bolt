@@ -550,12 +550,27 @@ private fun queryDisplayName(context: Context, uri: Uri): String {
 }
 
 private fun isKeyboardEnabled(context: Context): Boolean {
-    val enabled = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_INPUT_METHODS) ?: return false
-    return enabled.contains("${context.packageName}/.KeyboardService") || enabled.contains("com.bolt.keybolt/.KeyboardService")
+    // Android 14+ restricts direct reads of Settings.Secure.ENABLED_INPUT_METHODS
+    // for apps targeting newer SDKs. Use the public InputMethodManager API.
+    val inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    return inputMethodManager.enabledInputMethodList.any { inputMethod ->
+        inputMethod.packageName == context.packageName &&
+            inputMethod.serviceInfo.name == KeyboardService::class.java.name
+    }
 }
 
-
 private fun isKeyboardDefault(context: Context): Boolean {
-    val selected = Settings.Secure.getString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD) ?: return false
-    return selected.contains("${context.packageName}/.KeyboardService") || selected.contains("com.bolt.keybolt/.KeyboardService")
+    // DEFAULT_INPUT_METHOD may also be restricted on some Android builds.
+    // A denied read must never crash the launcher or settings screen.
+    return try {
+        val selected = Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.DEFAULT_INPUT_METHOD
+        ) ?: return false
+        selected == "${context.packageName}/.KeyboardService" ||
+            selected == "${context.packageName}/${KeyboardService::class.java.name}" ||
+            selected == "com.bolt.keybolt/.KeyboardService"
+    } catch (_: SecurityException) {
+        false
+    }
 }
