@@ -12,6 +12,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -33,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -108,7 +110,11 @@ private fun KeyBoltApp() {
             Column(Modifier.fillMaxSize().padding(padding)) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(44.dp).background(Gold, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                        Text("ϟ", color = Ink, fontWeight = FontWeight.Black, fontSize = 34.sp)
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            contentDescription = "Key-Bolt black lightning bolt",
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                     Spacer(Modifier.width(12.dp))
                     Column {

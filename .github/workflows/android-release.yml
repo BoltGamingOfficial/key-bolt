@@ -1,4 +1,4 @@
-name: Android v1.0 APK
+name: Android v1.1 APK
 
 on:
   push:
@@ -57,11 +57,11 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0
+          tag_name: v1.1
           target_commitish: ${{ github.sha }}
-          name: Key-Bolt v1.0
+          name: Key-Bolt v1.1
           body: |
-            ## Key-Bolt v1.0 — Android installable build
+            ## Key-Bolt v1.1 — Android installable test build
 
             **CUSTOM. FAST. BOLT.**
 
