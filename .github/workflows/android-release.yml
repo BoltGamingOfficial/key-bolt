@@ -40,16 +40,21 @@ jobs:
       - name: Run unit tests and build APK
         run: gradle --no-daemon --stacktrace testDebugUnitTest assembleDebug
 
+      - name: Name APK for distribution
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Key-Bolt.apk
+
       - name: Verify APK output
         run: |
-          test -s app/build/outputs/apk/debug/app-debug.apk
-          file app/build/outputs/apk/debug/app-debug.apk
+          test -s app/build/outputs/apk/debug/Key-Bolt.apk
+          file app/build/outputs/apk/debug/Key-Bolt.apk
+          sha256sum app/build/outputs/apk/debug/Key-Bolt.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
         with:
-          name: key-bolt-v1.0-android-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: Key-Bolt-android-apk
+          path: app/build/outputs/apk/debug/Key-Bolt.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -70,7 +75,7 @@ jobs:
             It is not signed with a private production release key and is not a Google Play upload.
             Review the repository README and feature matrix for current capabilities and limitations.
           prerelease: true
-          files: app/build/outputs/apk/debug/app-debug.apk
+          files: app/build/outputs/apk/debug/Key-Bolt.apk
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
