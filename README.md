@@ -1,35 +1,54 @@
-# Key-Bolt ⚡
+# Key-Bolt v1.0
 
-A new keyboard for Android and iPhone, with a gold-and-black look and lightning details.
+**CUSTOM. FAST. BOLT.**
 
-## What Key-Bolt is meant to do
+A native Android keyboard and companion workspace, with an iOS app and keyboard-extension project.
 
-Key-Bolt is being made for people who want more control over how their keyboard looks and works.
+## Android v1.0
 
-- **Make it yours:** choose colors, including your own custom color.
-- **Choose how you type:** switch between familiar layouts such as QWERTY and AZERTY, with more layouts planned.
-- **Keep useful text close:** save copied text in named folders and bring it back when you need it.
-- **Work with longer messages:** write or edit a long piece of text in Key-Bolt, then copy it into another app.
-- **Change the keyboard shape:** use a full-size, compact, one-hand or thumb-friendly layout.
-- **Type more privately:** use a private mode that hides saved clipboard items while it is on.
-- **Use more symbols and emoji:** reach commonly used emoji and extra symbols from the keyboard.
+- Native Android IME with QWERTY, AZERTY, QWERTZ, Dvorak, Colemak and alphabetical arrangements.
+- Adjustable keyboard size and one-hand/compact layouts.
+- Gold/black default theme, color presets and custom RGB/HEX accent.
+- Local clipboard tabs, named collections, colored text/file clips and optional automatic clipboard capture while the keyboard is visible.
+- Attachment references through Android's Storage Access Framework. Rich-content insertion depends on the receiving editor advertising the MIME type and accepting the content.
+- Long-text editor with copy and clear actions.
+- Incognito session mode; password fields and editors requesting no personalized learning automatically suppress clip capture.
+- Optional voice recognition handoff to the device's speech-recognition provider.
 
-## Is it ready to download?
+## Download
 
-**Not yet.** Key-Bolt is still being built. There is no working download for Android or iPhone at the moment.
+The GitHub Actions release workflow builds an installable Android debug-signed APK and publishes it to the **v1.0** GitHub Release after the Android build succeeds. This APK is suitable for direct installation/testing. It is not signed with a private production upload key and is not a Play Store release. A production-signed artifact requires the owner's private signing key, stored as GitHub Actions secrets.
 
-The current version is an early preview of the idea. Some screens and options are only partly working, and the keyboard has not yet been fully tested on real devices. We will share an installable version here when it is ready.
+## Build Android
 
-## Languages and voice typing
+Requirements: JDK 17, Android SDK 35, Gradle 8.9.
 
-More languages are part of the plan, including Chinese, Japanese, Korean, Arabic and Hindi. They are **not fully supported yet**. Seeing a language listed does not mean that its typing and word suggestions are ready.
+```bash
+gradle --no-daemon testDebugUnitTest assembleDebug
+```
 
-Voice typing and smarter spelling help are also still being worked on.
+Open the repository in Android Studio, install the generated APK, then enable **Key-Bolt** in Android Settings → System → Keyboard → On-screen keyboard and select it as the active input method.
 
-## A few things to know
+## iOS
 
-- On iPhone, Apple limits what third-party keyboards can do. Some apps and password boxes may not allow a custom keyboard.
-- Copying and pasting pictures or documents depends on what your phone and the app you are using allow.
-- Private mode is there to hide Key-Bolt's saved clips while it is enabled; it does not replace your phone's own privacy and security settings.
+The iOS host app and custom keyboard extension are maintained in `ios/`. Generate the Xcode project with XcodeGen and build with Xcode. Apple limits third-party keyboards; secure fields and some apps force the system keyboard. The extension does not request Full Access and does not read the system pasteboard.
 
-Thanks for checking out Key-Bolt. ⚡
+## Storage and platform limits
+
+- Android attachment selection accepts provider-backed files; actual capacity is bounded by device storage, filesystem and provider limits. Rich-content insertion only works in apps that advertise compatible MIME types.
+- iOS custom keyboard extensions have stricter access and host-app restrictions than Android.
+- Large file handling is not the same as unlimited capacity. Do not assume arbitrary file sizes can be loaded into memory or inserted into every app.
+- Android clip metadata/text is currently stored in app-private SharedPreferences. Very large text documents should be edited in Text Studio and exported rather than treated as unlimited clipboard payloads. A file-backed clip-store migration is a post-v1.0 engineering milestone.
+
+## Privacy
+
+Key-Bolt does not request Internet permission for Android keyboard operation and does not send typed text to a Key-Bolt server. Incognito disables Key-Bolt's own automatic clipboard capture and hides saved clips for the active session. It cannot prevent the operating system, destination app, accessibility services, backups or screen recording from observing content.
+
+## Known v1.0 limitations
+
+- Autocorrection and per-app correction controls are preferences only; a full language-aware suggestion engine is not included.
+- Multilingual subtype declarations do not mean Pinyin, Kana/Kanji, Korean or Indic composition engines are bundled.
+- iOS keyboard capabilities are not feature-equivalent to Android.
+- Attachment previews, media playback, file-backed text clip storage and full editor formatting are future milestones.
+
+See [Feature Matrix](docs/FEATURE_MATRIX.md), [Architecture](docs/ARCHITECTURE.md), and [Release Checklist](docs/RELEASE_CHECKLIST.md).

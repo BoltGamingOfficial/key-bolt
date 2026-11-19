@@ -1,0 +1,76 @@
+name: Android v1.0 APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: key-bolt-android-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Test and build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.9"
+
+      - name: Run unit tests and build APK
+        run: gradle --no-daemon --stacktrace testDebugUnitTest assembleDebug
+
+      - name: Verify APK output
+        run: |
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          file app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: key-bolt-v1.0-android-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish v1.0 GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0
+          target_commitish: ${{ github.sha }}
+          name: Key-Bolt v1.0
+          body: |
+            ## Key-Bolt v1.0 — Android installable build
+
+            **CUSTOM. FAST. BOLT.**
+
+            This APK is built by GitHub Actions after Android tests and build succeed.
+            It uses the standard Android debug key for direct installation/testing.
+            It is not signed with a private production release key and is not a Google Play upload.
+            Review the repository README and feature matrix for current capabilities and limitations.
+          prerelease: true
+          files: app/build/outputs/apk/debug/app-debug.apk
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

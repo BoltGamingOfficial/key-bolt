@@ -42,7 +42,7 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
         canvas.drawRect(0f, 0f, width.toFloat(), h, paint)
 
         val cell = width / 6f
-        val activeColor = if (service.incognito) 0xFFE0E0E0.toInt() else 0xFFD5A640.toInt()
+        val activeColor = if (service.incognito) 0xFFE0E0E0.toInt() else gold
         val idleColor = 0xFFB8B8B8.toInt()
         val active = listOf(false, false, false, panel == Panel.CLIPS, panel == Panel.EMOJI, service.incognito)
 
@@ -213,15 +213,15 @@ class BoltKeyboardView(context: android.content.Context, private val service: Ke
                     if (key.special) 0xFF454545.toInt() else 0xFF292929.toInt()
                 } else when {
                     isSpace -> 0xFF37383B.toInt()
-                    key.special -> 0xFFD0A044.toInt()
-                    else -> 0xFFF0EEE8.toInt()
+                    key.special -> gold
+                    else -> gold
                 }
                 canvas.drawRoundRect(rect, dp(6f), dp(6f), paint)
 
                 paint.color = when {
                     service.incognito -> 0xFFF1F1F1.toInt()
                     isSpace -> 0xFFF4F1E9.toInt()
-                    else -> 0xFF242424.toInt()
+                    else -> ink
                 }
                 paint.textAlign = Paint.Align.CENTER
                 paint.textSize = if (isSpace) sp(10f) else sp(if (key.special) 17f else 21f) * scale.coerceIn(.9f, 1.1f)

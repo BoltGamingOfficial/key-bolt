@@ -107,11 +107,13 @@ private fun KeyBoltApp() {
         ) { padding ->
             Column(Modifier.fillMaxSize().padding(padding)) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("⚡", color = Gold, fontSize = 30.sp)
-                    Spacer(Modifier.width(10.dp))
+                    Box(Modifier.size(44.dp).background(Gold, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                        Text("ϟ", color = Ink, fontWeight = FontWeight.Black, fontSize = 34.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
                     Column {
                         Text("KEY-BOLT", color = WarmWhite, fontWeight = FontWeight.Black, fontSize = 20.sp)
-                        Text("Your keyboard. Your rules.", color = Color.LightGray, fontSize = 12.sp)
+                        Text("CUSTOM. FAST. BOLT.", color = Gold, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.2.sp)
                     }
                 }
                 when (page) {
@@ -429,7 +431,7 @@ private fun ClipboardManagerScreen() {
                     }
                 })
                 OutlinedButton(onClick = {
-                    filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "application/*"))
+                    filePicker.launch(arrayOf("*/*"))
                 }) { Text("Add file", color = Gold) }
             }
         }
@@ -444,6 +446,15 @@ private fun ClipboardManagerScreen() {
                     Column(Modifier.weight(1f)) {
                         Text(if (clip.uri.isBlank()) clip.text.take(240) else "📎 ${clip.displayName}", color = WarmWhite, maxLines = 5)
                         Text(if (clip.uri.isBlank()) "Text snippet" else "Saved attachment reference", color = Color.LightGray, fontSize = 11.sp)
+                    }
+                    IconButton(onClick = {
+                        val palette = KeyBoltPrefs.presets.map { it.second }
+                        val next = palette[(palette.indexOf(clip.color).coerceAtLeast(-1) + 1) % palette.size]
+                        val updated = clips.map { if (it.id == clip.id) it.copy(color = next) else it }
+                        clips = updated
+                        KeyBoltPrefs.saveClips(context, updated)
+                    }) {
+                        Icon(Icons.Default.Palette, contentDescription = "Change clip color", tint = WarmWhite)
                     }
                     IconButton(onClick = {
                         val updated = clips.filterNot { it.id == clip.id }
